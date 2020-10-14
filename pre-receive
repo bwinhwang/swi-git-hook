@@ -1,0 +1,67 @@
+#!/usr/bin/env python3
+
+import filetype
+import subprocess
+import sys
+
+maxsize=1000
+NULLSHA='0000000000000000000000000000000000000000'
+
+def call(cmd):
+    output = subprocess.check_output(cmd)
+    return output.decode('UTF8')
+
+def getRef(line):
+    s = line.split()
+    if len(s) != 3:
+        return
+    # deletion
+    if s[1] == NULLSHA:
+        return
+    if s[0] == NULLSHA:
+        return s[1]
+    else:
+        return s[0] + '..' + s[1]
+
+# line is:
+# hash type size name
+def filterBlobSize(line, maxsize):
+    if len(line) == 0:
+        return []
+    if line == None:
+        return []
+    splitted = line.split()
+    if splitted[1] != 'blob':
+        return []
+    if int(splitted[2]) > maxsize:
+        return [splitted[3]]
+    return []
+
+def main():
+
+    files = []
+
+    for line in sys.stdin:
+        ref = getRef(line)
+        if ref == None:
+            continue
+        cmd = 'git rev-list --objects ' + ref + ' --not --branches=\* --tags=\*'
+        revlist = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
+        cmd2 = ['git', 'cat-file', '--batch-check=%(objectname) %(objecttype) %(objectsize) %(rest)']
+        out = subprocess.check_output(cmd2, stdin=revlist.stdout)
+        revlist.wait()
+        outdecoded = out.decode('UTF8')
+        for o in outdecoded.split('\n'):
+            files += filterFiles(o, maxsize)
+    if len(files):
+        print()
+        print('ERROR: large file(s) detected:')
+        for f in files:
+            print(f)
+        print()
+        sys.exit(-1)
+    else:
+        return
+
+if __name__ == '__main__':
+    main()
