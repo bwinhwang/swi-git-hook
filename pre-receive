@@ -70,6 +70,9 @@ def main():
         for f in files:
             print(f)
         print()
+        print('For large (binary) files you are kindly asked to use git lfs.')
+        print('Please refer to https://docs.gitlab.com/ee/topics/git/lfs/#using-git-lfs on how to use git lfs.')
+        print()
         sys.exit(-1)
     else:
         return
