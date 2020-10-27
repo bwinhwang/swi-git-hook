@@ -37,6 +37,8 @@ def filterFiles(line, maxsize):
     cmdfile = ['file', '-b', '--mime-type', '-']
     catfile = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE)
     out = subprocess.check_output(cmdfile, stdin=catfile.stdout)
+    # file may not read the whole file, close the pipe so that git will quit
+    catfile.stdout.close()
     catfile.wait()
     outdecoded = out.decode('UTF8')
     # allow text files only (includes sources and html etc.)
